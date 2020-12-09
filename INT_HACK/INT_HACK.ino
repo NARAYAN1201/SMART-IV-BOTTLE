@@ -11,9 +11,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 HX711 cell(2,0);
 String data2;
 // Replace with your network credentials
-const char* ssid = "ASUS_X00TD"; //Enter Wi-Fi SSID
-const char* password =  "1234567890"; //Enter Wi-Fi Password
-ESP8266WebServer server(80);   //instantiate server at port 80 (http port)
+const char* ssid = "YOUR-SSID";   // Enter Wi-Fi SSID
+const char* password =  "PASSWORD";   // Enter Wi-Fi Password
+ESP8266WebServer server(80);    //  Instantiate server at port 80 (http port)
 float val = 0;
 float count = 0;
 float weight = 0;
@@ -21,6 +21,16 @@ float weight = 0;
 String page = "";
 String text = "";
 double data;
+
+void wifi_connect(void){
+  WiFi.begin(ssid, password); // begin WiFi connection
+  Serial.println("");
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    wifi_connect();
+}
 void setup(void) {
   Wire.begin();
 
@@ -32,12 +42,7 @@ void setup(void) {
   pinMode(A0, INPUT);
   delay(1000);
   Serial.begin(115200);
-  WiFi.begin(ssid, password); //begin WiFi connection
-  Serial.println("");
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  
   }
 
   Serial.println("");
@@ -80,12 +85,13 @@ void loop(void) {
   // Use only one of these
   //val = ((count-1)/count) * val    +  (1/count) * cell.read(); // take long term average
   //val = 0.5 * val    +   0.5 * cell.read(); // take recent average
+  
   val = cell.read(); // most recent reading
   
  // Serial.println( val );
   
-  weight = -(-(910.0/(7975000.0-8349800.0))*(val-8349800.0));
-  //data = weight;
+  weight = -(-(910.0/(7975000.0-8349800.0))*(val-8349800.0));  // These values are taken on the experimental basis of a normal IV-bottle
+  // data = weight;
   float filledlevel=(weight/1000.00)*100;
   data= filledlevel;
   
@@ -100,7 +106,10 @@ void loop(void) {
   Serial.println(weight);
   }
   if(filledlevel<=10)
-  {data2 = "DANGER";}
+  {
+    // wifi_connect();  // uncomment this if you want to use wifi only when level in smaller or equal to 10%
+    data2 = "CHANGE-BOTTLE";}
   else{data2="SAFE";}
   server.handleClient();
+ // WiFi.disconnect(); // uncomment this if you want to use wifi only when level in smaller or equal to 10%
 }
